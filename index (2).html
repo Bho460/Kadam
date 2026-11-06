@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kadam: teacher diagnostic (prototype)</title>
+<style>
+:root{--bg:#f6f8fb;--cd:#fff;--tx:#1b2430;--mu:#5d6b7c;--pr:#1f3a5f;--pt:#fff;--bd:#cfd8e3;--ok:#1e7a46;--okb:#e3f4ea;--mid:#8a5a00;--midb:#fff1d6;--bad:#a52a2a;--badb:#fde4e4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161e;--cd:#18212c;--tx:#e8edf3;--mu:#9aa8b8;--pr:#7fb0ee;--pt:#0b1420;--bd:#2c3a4a;--ok:#7ddba3;--okb:#16301f;--mid:#f2c46d;--midb:#352a10;--bad:#f59a9a;--badb:#3a1a1a}}
+:root[data-theme="dark"]{--bg:#10161e;--cd:#18212c;--tx:#e8edf3;--mu:#9aa8b8;--pr:#7fb0ee;--pt:#0b1420;--bd:#2c3a4a;--ok:#7ddba3;--okb:#16301f;--mid:#f2c46d;--midb:#352a10;--bad:#f59a9a;--badb:#3a1a1a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:14px}
+h1{font-size:1.3rem;color:var(--pr);margin:.2em 0}h2{font-size:1.05rem;margin:.2em 0 .5em;color:var(--pr)}
+.c{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:10px 0}
+.n{font-size:.85rem;color:var(--mu)}
+button{background:var(--pr);color:var(--pt);border:0;border-radius:8px;padding:11px 16px;font:inherit;font-weight:600;cursor:pointer;margin:3px 3px 3px 0}
+button.g{background:transparent;color:var(--pr);border:1px solid var(--pr)}
+input[type=text]{width:100%;padding:12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.big{font-size:2rem;font-weight:700;text-align:center;padding:18px 4px;letter-spacing:.02em}
+.bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pr)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)}
+.chip{padding:2px 10px;border-radius:12px;font-size:.85rem;font-weight:700;white-space:nowrap}
+.ok{background:var(--okb);color:var(--ok)}.mid{background:var(--midb);color:var(--mid)}.bad{background:var(--badb);color:var(--bad)}
+.fb{padding:10px;border-radius:8px;margin:8px 0}.o{display:flex;gap:8px;align-items:center;padding:6px 0}
+</style></head><body><main id="app"></main>
+<script>
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1)),P=a=>a[R(0,a.length-1)];
+const SK={
+u1:['Metres to cm','मीटर से सेमी','1 m = 100 cm. Going from a bigger unit to a smaller unit: multiply.'],
+u2:['cm to metres','सेमी से मीटर','100 cm = 1 m. Going from a smaller unit to a bigger unit: divide by 100.'],
+n1:['Adding and subtracting negatives','ऋणात्मक संख्याओं का जोड़-घटाव','Same signs: add and keep the sign. Different signs: subtract and keep the sign of the bigger number.'],
+n2:['Signs in × and ÷','× और ÷ में चिह्न','Same signs give a positive answer. Different signs give a negative answer.'],
+b:['BODMAS (order of operations)','BODMAS (संक्रियाओं का क्रम)','Brackets first, then × and ÷, then + and −.']};
+const G={
+u1:()=>{const m=P([2,3,4,5,6,7,8,9,12,15,25,1.5,2.5,3.5]);return[m+' m = ? cm',Math.round(m*100)]},
+u2:()=>{const c=P([200,300,450,600,750,1200,250,50,325,900]);return[c+' cm = ? m',c/100]},
+n1:()=>{const x=R(2,12),y=R(2,12);return P([['−'+x+' + '+y,y-x],[x+' − '+y,x-y],['−'+x+' − '+y,-x-y],[x+' + (−'+y+')',x-y]])},
+n2:()=>{const x=R(2,9),y=R(2,9);return P([['(−'+x+') × '+y,-x*y],['(−'+x+') × (−'+y+')',x*y],['(−'+x*y+') ÷ '+y,-x],['(−'+x*y+') ÷ (−'+y+')',x]])},
+b:()=>{const a=R(2,9),b=R(2,9),c=R(2,9),s=R(10,30),x=R(2,5),y=R(2,5);return P([[a+' + '+b+' × '+c,a+b*c],[s+' − '+x*y+' ÷ '+y,s-x],['('+a+' + '+b+') × '+c,(a+b)*c],[a+' × '+b+' − '+c,a*b-c]])}};
+const KEY='kadam_proto_v1';let D={};try{D=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const app=document.getElementById('app');let qz=null;
+const stt=w=>w>=2?['Needs help','bad','✗']:w==1?['Watch','mid','!']:['OK','ok','✓'];
+const wrong=a=>a.filter(x=>!x).length;
+function home(){const ks=Object.keys(D).sort();
+app.innerHTML='<h1>Kadam</h1><p class="n">Teacher diagnostic prototype. Works on one phone, no internet needed once this page is open.</p>'+
+'<div class="c"><h2>Check a child</h2><input type="text" id="kid" maxlength="6" placeholder="Child code, e.g. A (or leave empty)" autocomplete="off"><p class="n">Optional: tick the skills you expect this child to find hard. Kadam will compare its result with your expectation.</p>'+Object.keys(SK).map(s=>'<label class="o"><input type="checkbox" class="ex" value="'+s+'">'+E(SK[s][0])+'</label>').join('')+'<button data-a="start">Start 15-question check</button><p class="n">Use codes only, never names. Get parent consent and the child’s assent first. Answers stay on this device.</p></div>'+
+'<div class="c"><h2>Children ('+ks.length+')</h2>'+(ks.map(k=>{const t=D[k],l=t[t.length-1],nh=Object.values(l.r).filter(a=>wrong(a)>=2).length;return'<div class="row"><span><b>'+E(k)+'</b> <span class="n">'+t.length+' check(s)</span></span><span><span class="chip '+(nh?'bad':'ok')+'">'+(nh?nh+' skill(s) need help':'All OK')+'</span> <button class="g" data-a="res" data-k="'+E(k)+'">View</button></span></div>'}).join('')||'<p class="n">No checks yet.</p>')+
+(ks.length?'<button data-a="sum">Class summary</button><button class="g" data-a="clr">Delete all data</button>':'')+'</div>'}
+function start(){let k=(document.getElementById('kid').value||'').replace(/[^A-Za-z0-9]/g,'').toUpperCase();if(!k){k='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').find(c=>!D[c])||String(Object.keys(D).length+1)}
+const it=[];for(const s in G)for(let i=0;i<3;i++){const[q,a]=G[s]();it.push({s,q,a})}
+for(let i=it.length-1;i>0;i--){const j=R(0,i);[it[i],it[j]]=[it[j],it[i]]}
+const ex=[...document.querySelectorAll('.ex:checked')].map(x=>x.value);qz={k,it,i:0,r:{u1:[],u2:[],n1:[],n2:[],b:[]},t:0,d:[],ts:0,ex:ex.length?ex:null};ask()}
+function ask(){const x=qz.it[qz.i];qz.ts=Date.now();
+app.innerHTML='<div class="bar"><i style="width:'+qz.i/qz.it.length*100+'%"></i></div><p class="n">Child '+E(qz.k)+' · Question '+(qz.i+1)+' of '+qz.it.length+'</p><div class="c"><div class="big">'+E(x.q)+'</div><input type="text" id="ans" inputmode="text" autocomplete="off" placeholder="Your answer (use - for negative)"><div id="fb"></div><button data-a="chk">Check</button><button class="g" data-a="say">Read aloud</button></div>';document.getElementById('ans').focus()}
+function chk(){const x=qz.it[qz.i],inp=document.getElementById('ans'),fb=document.getElementById('fb');
+const v=parseFloat(inp.value.replace(/[−–]/g,'-').replace(',','.'));if(isNaN(v)){fb.innerHTML='<div class="fb mid">Type a number.</div>';return}
+const ok=Math.abs(v-x.a)<1e-6;
+if(qz.t==0){qz.r[x.s].push(ok?1:0);qz.d.push({s:x.s,o:ok?1:0,ms:Date.now()-qz.ts,rc:null})}else qz.d[qz.d.length-1].rc=ok?1:0;
+if(ok){fb.innerHTML='<div class="fb ok">Correct.</div>';nxt()}
+else if(qz.t==0){qz.t=1;fb.innerHTML='<div class="fb mid"><b>Hint:</b> '+E(SK[x.s][2])+'<br>Try once more.</div>'}
+else{fb.innerHTML='<div class="fb mid">Let us look at this one with your teacher.</div>';nxt()}}
+function nxt(){const b=document.querySelector('[data-a=chk]');b.dataset.a='next';b.textContent=qz.i+1<qz.it.length?'Next question':'Finish'}
+function nx(){qz.t=0;qz.i++;if(qz.i<qz.it.length)ask();else{(D[qz.k]=D[qz.k]||[]).push({t:Date.now(),r:qz.r,ex:qz.ex,d:qz.d});save();res(qz.k)}}
+function say(){try{const u=new SpeechSynthesisUtterance(qz.it[qz.i].q.replace(/−/g,' minus ').replace(/×/g,' times ').replace(/÷/g,' divided by ').replace(/\?/g,'what').replace(/\bcm\b/g,'centimetres').replace(/ m /g,' metres '));u.lang='en-IN';speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function res(k){const t=D[k],l=t[t.length-1],p=t[t.length-2];let an='';if(l.d){const n=l.d.length,c=l.d.filter(q=>q.o).length,pct=Math.round(c/n*100),w=l.d.filter(q=>!q.o),rec=w.filter(q=>q.rc).length,fast=w.filter(q=>q.ms<4000).length,avg=Math.round(l.d.reduce((a,q)=>a+q.ms,0)/n/1000),hist=t.filter(a=>a.d).map((a,i)=>'Check '+(i+1)+': '+Math.round(a.d.filter(q=>q.o).length/a.d.length*100)+'%').join(' · ');an='<div class="c"><h2>Accuracy and analysis</h2><div class="big">'+pct+'%</div><div class="bar"><i style="width:'+pct+'%"></i></div><p class="n">'+c+' of '+n+' right on the first try</p>'+(w.length?'<p>After a hint, '+rec+' of '+w.length+' wrong answers were corrected. '+(rec==w.length?'These look like slips; more practice should help.':rec==0?'The hint did not help, so this may be a concept gap. Explain it directly.':'Some gaps look like slips, others need explanation.')+'</p>':'<p>No wrong answers this time.</p>')+(fast?'<p>'+fast+' wrong answer(s) came in under 4 seconds: the child may be rushing.</p>':'')+'<p class="n">Average time per question: '+avg+' s'+(hist?' · '+hist:'')+'</p></div>'}let cmp='';if(l.ex){const fl=Object.keys(SK).filter(s=>wrong(l.r[s])>=2),nm=a=>a.map(s=>E(SK[s][0])).join(', ')||'none';cmp='<div class="c"><h2>Your expectation vs Kadam</h2><p class="n">Both agree: '+nm(fl.filter(s=>l.ex.includes(s)))+'</p><p><b>New to you (Kadam flagged, you did not expect):</b> '+nm(fl.filter(s=>!l.ex.includes(s)))+'</p><p class="n">You expected, Kadam did not flag: '+nm(l.ex.filter(s=>!fl.includes(s)))+'</p></div>'}
+app.innerHTML='<h1>Child '+E(k)+'</h1><p class="n">Latest check: '+new Date(l.t).toLocaleDateString()+' · '+t.length+' check(s) so far</p><div class="c">'+Object.keys(SK).map(s=>{const w=wrong(l.r[s]),a=stt(w);let tr='';if(p){const wp=wrong(p.r[s]);tr=' <span class="n">'+(wp>w?'better than last time':wp<w?'worse than last time':'same as last time')+'</span>'}
+return'<div class="row"><span>'+E(SK[s][0])+'<br><span class="n">'+SK[s][1]+' · '+(l.r[s].length-w)+'/'+l.r[s].length+' right first time'+tr+'</span></span><span class="chip '+a[1]+'">'+a[2]+' '+a[0]+'</span></div>'}).join('')+'</div>'+an+cmp+'<p class="n">A flag is a signal for you, the teacher. It is not a grade. Two or more wrong out of three = needs help; one wrong = watch.</p><button data-a="home">Back</button><button class="g" data-a="start2" data-k="'+E(k)+'">Check again</button>'}
+function sm(){const ks=Object.keys(D).sort();let tx='Class summary\n';ks.forEach(k=>{const l=D[k][D[k].length-1],fl=Object.keys(SK).filter(s=>wrong(l.r[s])>=2),nm=a=>a.map(s=>SK[s][0]).join(', ')||'none';tx+='\n'+k+(l.d?' ('+Math.round(l.d.filter(q=>q.o).length/l.d.length*100)+'% first-try accuracy)':'')+': flagged = '+nm(fl);if(l.ex)tx+=' | teacher expected = '+nm(l.ex)+' | new to teacher = '+nm(fl.filter(s=>!l.ex.includes(s)))});
+app.innerHTML='<h1>Class summary</h1><div class="c"><textarea id="tx" readonly style="width:100%;min-height:200px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px;font:inherit">'+E(tx)+'</textarea></div><button data-a="cp">Copy</button><button class="g" data-a="home">Back</button>'}
+app.addEventListener('click',e=>{const a=e.target.dataset.a;if(!a)return;
+if(a=='start')start();else if(a=='chk')chk();else if(a=='next')nx();else if(a=='say')say();else if(a=='home')home();
+else if(a=='res')res(e.target.dataset.k);else if(a=='sum')sm();
+else if(a=='start2'){home();document.getElementById('kid').value=e.target.dataset.k;start()}
+else if(a=='cp'){const t=document.getElementById('tx');t.select();try{navigator.clipboard.writeText(t.value)}catch(x){try{document.execCommand('copy')}catch(y){}}}
+else if(a=='clr'&&confirm('Delete all children and results from this device?')){D={};save();home()}});
+app.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.id=='kid'){start();return}if(e.key=='Enter'&&qz&&document.getElementById('ans')){const b=document.querySelector('[data-a=chk],[data-a=next]');b&&b.click()}});
+home();
+</script></body></html>
